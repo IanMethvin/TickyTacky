@@ -58,7 +58,7 @@ function CanvasState(canvas) {
         var mouse = cState.getMouse(e);
         var quad = cState.quadrent(mouse.x, mouse.y);
 
-        alert("(" + mouse.x + "," + mouse.y + ") " + quad.squar);
+        //alert("(" + mouse.x + "," + mouse.y + ") " + quad.squar);
         if (quad) {
             if (isX) {
                 var x = new X(quad.x, quad.y);
