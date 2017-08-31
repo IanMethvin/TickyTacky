@@ -56,7 +56,7 @@ function CanvasState(canvas) {
 
     canvas.addEventListener('mousedown', function(e) {
         var mouse = cState.getMouse(e);
-        var quad = cState.quadrent(mouse.x, mouse.y);
+        var quad = cState.quadrant(mouse.x, mouse.y);
 
         //alert("(" + mouse.x + "," + mouse.y + ") " + quad.squar);
         if (quad) {
@@ -77,11 +77,16 @@ function CanvasState(canvas) {
       }, true);
 }
 
-CanvasState.prototype.quadrent = function(x, y) {
+CanvasState.prototype.quadrant = function(x, y) {
     var cX = this.centerX;
     var cY = this.centerY;
     var xDist = cX / 2 + 25; //+50 is temp
     var yDist = cX / 2 + 25;
+    
+    //better way to find quadrant (if all quads are equal size)
+    //x / (max X / 3)
+    //y / (may Y / 3)
+    //will give quad as 0 based set (1,0) is quad 4
 
     if (y > 50 && y < 175) {
         if (x > 50 && x < 175)
