@@ -3,6 +3,13 @@ function init() {
     s.drawBoard();
 }
 
+function reinit(cState) {
+    cState.ctx.clearRect(0, 0, cState.width, cState.height);
+    cState.drawBoard();
+    cState.moves = [];
+    cState.isX = 1;
+}
+
 function Symbol(x, y) {
     this.centerX = x;
     this.centerY = y;
@@ -46,90 +53,111 @@ function CanvasState(canvas) {
     this.canvas = canvas;
     this.width = canvas.width;
     this.height = canvas.height;
-    this.centerX = canvas.width / 2;
-    this.centerY = canvas.height / 2;
     this.ctx = canvas.getContext('2d');
+    this.isX = 1;
+    this.moves = [];
     var cState = this;
-    var isX = 1;
-
-    //alert(this.centerX + ", " + this.centerY);
 
     canvas.addEventListener('mousedown', function(e) {
         var mouse = cState.getMouse(e);
         var quad = cState.quadrant(mouse.x, mouse.y);
 
-        //alert("(" + mouse.x + "," + mouse.y + ") " + quad.squar);
-        if (quad) {
-            if (isX) {
-                var x = new X(quad.x, quad.y);
-                x.draw(cState.ctx);
-            }
-            else {
-                var o = new O(quad.x, quad.y);
-                o.draw(cState.ctx);
-            }
-    
-            //switch turns
-            isX = !isX;
+        if (quad && !cState.moveMade(quad)) {
+            cState.makeMove(quad);
+            setTimeout(function(){
+                cState.aiMove();
+            }, 350);
         }
+    }, true);
+      
+    document.getElementById('restart').addEventListener('click', function (event) {
+        reinit(cState);
+    }, true);
 
+    window.addEventListener('keyup', function(e) {
+        if (e.which == 27) {
+            reinit(cState);
+        }
+    }, true);
+}
 
-      }, true);
+CanvasState.prototype.moveMade = function(quad) {
+    return this.moves.contains(quad);
+}
+
+CanvasState.prototype.makeMove = function(quad) {
+    var cState = this;
+    cState.moves.push(quad);
+    if (cState.isX) {
+        var x = new X(quad.x, quad.y);
+        x.draw(cState.ctx);
+    }
+    else {
+        var o = new O(quad.x, quad.y);
+        o.draw(cState.ctx);
+    }
+    //switch turns
+    cState.isX = !cState.isX;
+}
+
+CanvasState.prototype.aiMove = function() {
+    var cState = this;
+    var rMove = getRandomMove(cState); //random click
+    var pMove = cState.quadrant(rMove.x, rMove.y); //possible move
+    while (cState.moveMade(pMove)) {
+        rMove = getRandomMove(cState); 
+        pMove = cState.quadrant(rMove.x, rMove.y);
+    }
+    cState.makeMove(pMove);
+}
+
+function getRandomMove(cState) {
+    var move = 
+    {
+        x: randomIntFromInterval(0, cState.width),
+        y: randomIntFromInterval(0, cState.height)
+    };
+    return move;
+}
+
+function randomIntFromInterval(min,max)
+{
+    return Math.floor(Math.random()*(max-min+1)+min);
 }
 
 CanvasState.prototype.quadrant = function(x, y) {
-    var cX = this.centerX;
-    var cY = this.centerY;
-    var xDist = cX / 2 + 25; //+50 is temp
-    var yDist = cX / 2 + 25;
-    
-    //better way to find quadrant (if all quads are equal size)
-    //x / (max X / 3)
-    //y / (may Y / 3)
-    //will give quad as 0 based set (1,0) is quad 4
+    var maxX = this.width;
+    var maxY = this.height;
+    var qW = maxX / 3; //width of each quadrant
+    var qH = maxY / 3; //height of each quadrant
+    var xCenter = qW / 2; //x center of quadrant
+    var yCenter = qH / 2 //y center of quadrant
 
-    if (y > 50 && y < 175) {
-        if (x > 50 && x < 175)
-            return { squar: 1, x: 113, y: 113 };
-        if (x > 175 && x < 325)
-            return { squar: 2, x: 250, y: 113 };
-        if (x > 325 && x < 450)
-            return { squar: 3, x: 390, y: 113 };
-    }
-    else if (y > 175 && y < 325) {
-        if (x > 50 && x < 175)
-            return { squar: 4, x: 113, y: 250 };
-        if (x > 175 && x < 325)
-            return { squar: 5, x: 250, y: 250 };
-        if (x > 325 && x < 450)
-            return { squar: 6, x: 390, y: 250 };
-    }
-    else if (y > 325 && y < 450) {
-        if (x > 50 && x < 175)
-            return { squar: 7, x: 113, y: 390 };
-        if (x > 175 && x < 325)
-            return { squar: 8, x: 250, y: 390 };
-        if (x > 325 && x < 450)
-            return { squar: 9, x: 390, y: 390 };
-    }
+    var xCord = (Math.floor(x / qW) * qW) + xCenter;
+    var yCord = (Math.floor(y / qH) * qH) + yCenter;
 
+    return { x: xCord, y: yCord }
 }
 
 CanvasState.prototype.drawBoard = function() {
     var ctx = this.ctx;
+    var w = this.width;
+    var h = this.height;
+    var qW = w / 3; //width of each quadrant
+    var qH = h / 3; //height of each quadrant
     ctx.beginPath();
     //vertical left
-    ctx.moveTo(175, 50);
-    ctx.lineTo(175, 450);
-    //vertical right
-    ctx.moveTo(325, 50);
-    ctx.lineTo(325, 450);
-    //horizontal top
-    ctx.moveTo(50, 175);
-    ctx.lineTo(450, 175);
-    //horizontal bottom
-    ctx.moveTo(50, 325);
-    ctx.lineTo(450, 325);
+    ctx.moveTo(qW, 0);
+    ctx.lineTo(qW, w);
+    // //vertical right
+    ctx.moveTo(w - qW, 0);
+    ctx.lineTo(w - qW, w);
+    // //horizontal top
+    ctx.moveTo(0, qH);
+    ctx.lineTo(h, qH);
+    // //horizontal bottom
+    ctx.moveTo(0, h - qH);
+    ctx.lineTo(h, h - qH);
 
     ctx.lineWidth = 5;
     ctx.stroke();
@@ -153,4 +181,11 @@ CanvasState.prototype.getMouse = function(e) {
     return {x: mx, y: my};
   }
 
+Array.prototype.contains = function(item) {
+    for (arr = 0; arr < this.length; arr++) {
+        if (this[arr].x == item.x && this[arr].y == item.y)
+            return true;
+    }
+    return false;
+}
 
