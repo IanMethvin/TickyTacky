@@ -1,191 +1,59 @@
-function init() {
-    var s = new CanvasState(document.getElementById('tickTack'));
-    s.drawBoard();
+
+// Canvas object and state references
+var canvasObj = {};
+var cState = {};
+
+// Defined list of all possible win combinations in the format - (First two quadrants: Last quadrant needed to win)
+var gameWinPaths = {
+    // Horizontal Win Combinations
+    12: 3, 21: 3, 23: 1, 32: 1, 13: 2, 31: 2, // 1 2 3
+    45: 6, 54: 6, 56: 4, 65: 4, 46: 5, 64: 5, // 4 5 6
+    78: 9, 87: 9, 89: 7, 98: 7, 79: 8, 97: 8, // 7 8 9
+    
+    // Vertical Win Combinations
+    14: 7, 41: 7, 47: 1, 74: 1, 17: 4, 71: 4, // 1 4 7
+    25: 8, 52: 8, 58: 2, 85: 2, 28: 5, 82: 5, // 2 5 8
+    36: 9, 63: 9, 69: 3, 96: 3, 39: 6, 93: 6, // 3 6 9
+
+    // Diagonal Win Combinations
+    15: 9, 51: 9, 59: 1, 95: 1, 19: 5, 91: 5, // 1 5 9
+    35: 7, 53: 7, 57: 3, 75: 3, 37: 5, 73: 5  // 3 5 7
 }
 
-function reinit(cState) {
+// Initialize the game board on page load.
+function initializeBoard () {
+    canvasObj = $('#gameCanvas');
+    cState = new CanvasState(canvasObj[0]);
+
+    resetBoard();
+}
+
+// Clears the game board and reset the game state.
+function resetBoard() {
     cState.ctx.clearRect(0, 0, cState.width, cState.height);
     cState.drawBoard();
-    cState.moves = [];
-    cState.isX = 1;
+    cState.movesListX = [];
+    cState.movesListO = [];
+    cState.isUserTurn = true;
+    cState.gameWinner = null;
+
+    $('#gameOverHeader').hide();
 }
 
-function Symbol(x, y) {
-    this.centerX = x;
-    this.centerY = y;
-    this.distFromCenter = 38;
-    this.lineWidth = 3;
-}
-
-function O(x, y) {
-    Symbol.call(this, x, y);
-}
-
-O.prototype.draw = function(ctx) {
-    var x = this.centerX;
-    var y = this.centerY;
-    var l = this.distFromCenter;
-
-    ctx.beginPath();
-    ctx.arc(x, y, l, 0, 2*Math.PI);
-    ctx.stroke();
-}
-
-function X(x, y) {
-    Symbol.call(this, x, y);
-}
-
-X.prototype.draw = function(ctx) {
-    var x = this.centerX;
-    var y = this.centerY;
-    var l = this.distFromCenter;
-
-    ctx.beginPath();
-    ctx.moveTo(x - l, y - l);
-    ctx.lineTo(x + l, y + l);
-    ctx.moveTo(x + l, y - l);
-    ctx.lineTo(x - l, y + l);
-    ctx.lineWidth = this.lineWidth;
-    ctx.stroke();
-}
-
-function CanvasState(canvas) {
-    this.canvas = canvas;
-    this.width = canvas.width;
-    this.height = canvas.height;
-    this.ctx = canvas.getContext('2d');
-    this.isX = 1;
-    this.moves = [];
-    var cState = this;
-
-    canvas.addEventListener('mousedown', function(e) {
-        var mouse = cState.getMouse(e);
-        var quad = cState.quadrant(mouse.x, mouse.y);
-
-        if (quad && !cState.moveMade(quad)) {
-            cState.makeMove(quad);
-            setTimeout(function(){
-                cState.aiMove();
-            }, 350);
-        }
-    }, true);
-      
-    document.getElementById('restart').addEventListener('click', function (event) {
-        reinit(cState);
-    }, true);
-
-    window.addEventListener('keyup', function(e) {
-        if (e.which == 27) {
-            reinit(cState);
-        }
-    }, true);
-}
-
-CanvasState.prototype.moveMade = function(quad) {
-    return this.moves.contains(quad);
-}
-
-CanvasState.prototype.makeMove = function(quad) {
-    var cState = this;
-    cState.moves.push(quad);
-    if (cState.isX) {
-        var x = new X(quad.x, quad.y);
-        x.draw(cState.ctx);
-    }
-    else {
-        var o = new O(quad.x, quad.y);
-        o.draw(cState.ctx);
-    }
-    //switch turns
-    cState.isX = !cState.isX;
-}
-
-CanvasState.prototype.aiMove = function() {
-    var cState = this;
-    var rMove = getRandomMove(cState); //random click
-    var pMove = cState.quadrant(rMove.x, rMove.y); //possible move
-    while (cState.moveMade(pMove)) {
-        rMove = getRandomMove(cState); 
-        pMove = cState.quadrant(rMove.x, rMove.y);
-    }
-    cState.makeMove(pMove);
-}
-
-function getRandomMove(cState) {
-    var move = 
-    {
-        x: randomIntFromInterval(0, cState.width),
-        y: randomIntFromInterval(0, cState.height)
-    };
-    return move;
-}
-
+// Generate a random number between the min and max.
 function randomIntFromInterval(min,max)
 {
     return Math.floor(Math.random()*(max-min+1)+min);
 }
 
-CanvasState.prototype.quadrant = function(x, y) {
-    var maxX = this.width;
-    var maxY = this.height;
-    var qW = maxX / 3; //width of each quadrant
-    var qH = maxY / 3; //height of each quadrant
-    var xCenter = qW / 2; //x center of quadrant
-    var yCenter = qH / 2 //y center of quadrant
-
-    var xCord = (Math.floor(x / qW) * qW) + xCenter;
-    var yCord = (Math.floor(y / qH) * qH) + yCenter;
-
-    return { x: xCord, y: yCord }
-}
-
-CanvasState.prototype.drawBoard = function() {
-    var ctx = this.ctx;
-    var w = this.width;
-    var h = this.height;
-    var qW = w / 3; //width of each quadrant
-    var qH = h / 3; //height of each quadrant
-    ctx.beginPath();
-    //vertical left
-    ctx.moveTo(qW, 0);
-    ctx.lineTo(qW, w);
-    // //vertical right
-    ctx.moveTo(w - qW, 0);
-    ctx.lineTo(w - qW, w);
-    // //horizontal top
-    ctx.moveTo(0, qH);
-    ctx.lineTo(h, qH);
-    // //horizontal bottom
-    ctx.moveTo(0, h - qH);
-    ctx.lineTo(h, h - qH);
-
-    ctx.lineWidth = 5;
-    ctx.stroke();
-}
-
-CanvasState.prototype.getMouse = function(e) {
-    var element = this.canvas, offsetX = 0, offsetY = 0, mx, my;
+// Generate a random move within the canvas board.
+function getRandomMove() {
+    var move = 
+    {
+        x: randomIntFromInterval(0, cState.width),
+        y: randomIntFromInterval(0, cState.height)
+    };
     
-    // Compute the total offset
-    if (element.offsetParent !== undefined) {
-      do {
-        offsetX += element.offsetLeft;
-        offsetY += element.offsetTop;
-      } while ((element = element.offsetParent));
-    }
-  
-    mx = e.pageX - offsetX;
-    my = e.pageY - offsetY;
-    
-    // We return a simple javascript object (a hash) with x and y defined
-    return {x: mx, y: my};
-  }
-
-Array.prototype.contains = function(item) {
-    for (arr = 0; arr < this.length; arr++) {
-        if (this[arr].x == item.x && this[arr].y == item.y)
-            return true;
-    }
-    return false;
+    return move;
 }
 

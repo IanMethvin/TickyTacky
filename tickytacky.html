@@ -1,18 +1,32 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <!-- Application Stylesheets -->
         <link rel="stylesheet" type="text/css" href="css/tickyTacky.css">
-        <script src="js/tickyTacky.js"></script>
+
+        <!-- Library scripts -->
+        <script type="text/javascript" src="libraries/jquery-3.2.1.min.js"></script>
+        <script type="text/javascript" src="libraries/underscore-min.js"></script>
+        
+        <!-- Application scripts -->
+        <script type="text/javascript" src="js/Symbols.js"></script>
+        <script type="text/javascript" src="js/CanvasState.js"></script>
+        <script type="text/javascript" src="js/TickyTacky.js"></script>
     </head>
-    <body onload="init()">
-        <div id="container" unselectable="on">
+    <body onload="initializeBoard()">
+        <!-- Container for game canvas  -->
+        <div id="gameContainer" unselectable="on">
             <h2>Ticky Tacky</h2>
-            <br><br>
-            <canvas id="tickTack" height="400" width="400">
+            
+            <!-- Canvas Game Board -->
+            <canvas id="gameCanvas" height="600" width="600">
                 Your browser does not support the HTML5 canvas tag.
             </canvas>
-            <br><br>
-            <h4 id="restart">Restart Game (Esc)</h4>
+
+            <h1 id="gameOverHeader"></h1>
+
+            <!-- Header used to restart the game on click or on esc press. -->
+            <h4 id="restartHeader">Press ESC or click here to restart the game</h4>
         </div>
     </body>
 </html>
