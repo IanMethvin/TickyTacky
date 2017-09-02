@@ -162,17 +162,17 @@ CanvasState.prototype.aiMove = function() {
 CanvasState.prototype.checkGameStatus = function (currentMove) {
     var currentSymbolMoveList = (cState.isUserTurn ? this.movesListX : this.movesListO)
 
-        _.each(currentSymbolMoveList, function (previousMove) {
-            if (cState.gameWinner === null) {
-                // Determine if a possible win path exists based on combining the current move with a previous move.
-                var possibleWinPath = gameWinPaths[currentMove + '' + previousMove];
+    _.each(currentSymbolMoveList, function (previousMove) {
+        if (cState.gameWinner === null) {
+            // Determine if a possible win path exists based on combining the current move with a previous move.
+            var possibleWinPath = gameWinPaths[currentMove + '' + previousMove];
 
-                // If a possible win path exists, look for the final move in that win path in the list of previous moves.
-                if (possibleWinPath && _.contains(currentSymbolMoveList, possibleWinPath)) {
-                    cState.gameWinner = (cState.isUserTurn ? 'X' : 'O');
-                }
+            // If a possible win path exists, look for the final move in that win path in the list of previous moves.
+            if (possibleWinPath && _.contains(currentSymbolMoveList, possibleWinPath)) {
+                cState.gameWinner = (cState.isUserTurn ? 'X' : 'O');
             }
-        });
+        }
+    });
 
     // If no winner was found and there are no more available moves, then end the game as a draw.
     if (this.gameWinner === null && (this.movesListX.length + this.movesListO.length + 1 >= 9)) {
