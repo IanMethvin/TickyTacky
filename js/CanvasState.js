@@ -71,7 +71,8 @@ CanvasState.prototype.drawBoard = function() {
     ctx.moveTo(0, h - qH);
     ctx.lineTo(h, h - qH);
 
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#008b8b';
     ctx.stroke();
 }
 
@@ -132,7 +133,7 @@ CanvasState.prototype.makeMove = function(quad) {
     }
 
     // Check the game status before switching sides and moving on to the next move.
-    this.checkGameStatus(currentSymbolMoveList, quad.quadrant);
+    this.checkGameStatus(quad.quadrant);
     currentSymbolMoveList.push(quad.quadrant);
 
     //switch turns
@@ -158,26 +159,36 @@ CanvasState.prototype.aiMove = function() {
 
 // Checks the current state of the game by comparing the current move against previous moves.
 // Note: This occurs BEFORE inserting the current move into the symbol's move list.
-CanvasState.prototype.checkGameStatus = function (currentSymbolMoveList, currentMove) {
-    _.each(currentSymbolMoveList, function (previousMove) {
-        if (cState.gameWinner === null) {
-            // Determine if a possible win path exists based on combining the current move with a previous move.
-            var possibleWinPath = gameWinPaths[currentMove + '' + previousMove];
+CanvasState.prototype.checkGameStatus = function (currentMove) {
+    var currentSymbolMoveList = (cState.isUserTurn ? this.movesListX : this.movesListO)
 
-            // If a possible win path exists, look for the final move in that win path in the list of previous moves.
-            if (possibleWinPath && _.contains(currentSymbolMoveList, possibleWinPath)) {
-                cState.gameWinner = (cState.isUserTurn ? 'X' : 'O');
+        _.each(currentSymbolMoveList, function (previousMove) {
+            if (cState.gameWinner === null) {
+                // Determine if a possible win path exists based on combining the current move with a previous move.
+                var possibleWinPath = gameWinPaths[currentMove + '' + previousMove];
+
+                // If a possible win path exists, look for the final move in that win path in the list of previous moves.
+                if (possibleWinPath && _.contains(currentSymbolMoveList, possibleWinPath)) {
+                    cState.gameWinner = (cState.isUserTurn ? 'X' : 'O');
+                }
             }
-        }
-    });
+        });
 
-    // Display end game text if a winner is found.
+    // If no winner was found and there are no more available moves, then end the game as a draw.
+    if (this.gameWinner === null && (this.movesListX.length + this.movesListO.length + 1 >= 9)) {
+        this.gameWinner = 'XO';
+    }
+
+    // Display end game text if a winner is found or if the game ended in a draw.
     if (this.gameWinner) {
         if (this.gameWinner === 'X') {
-            $('#gameOverHeader').text('Congrats, you won this game! You are the ultimate Ticky Tacky champion.');
+            $('#gameOverHeader').text('Congrats, you won the game! You are the ultimate Ticky Tacky champion.');
+        }
+        else if (this.gameWinner === 'O') {
+            $('#gameOverHeader').text('Aw... the random bot won the game. Better luck next time!');
         }
         else {
-            $('#gameOverHeader').text('Aw... the random bot won this game. Better luck next time!');
+            $('#gameOverHeader').text('Looks like this game ended in a draw. Maybe you\'ll win the next game!');
         }
 
         $('#gameOverHeader').show();

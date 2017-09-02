@@ -23,6 +23,7 @@ O.prototype.draw = function() {
     // Draw circle
     ctx.beginPath();
     ctx.arc(x, y, l, 0, 2*Math.PI);
+    ctx.strokeStyle = '#008b8b';
     ctx.stroke();
 }
 
@@ -50,5 +51,6 @@ X.prototype.draw = function(ctx) {
     ctx.lineTo(x - l, y + l);
     
     ctx.lineWidth = this.lineWidth;
+    ctx.strokeStyle = '#008b8b';
     ctx.stroke();
 }
